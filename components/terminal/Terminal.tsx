@@ -178,16 +178,6 @@ export function Terminal({ logs, onClear }: Props) {
             ))}
           </div>
 
-          {onClear && (
-            <button
-              onClick={onClear}
-              title="Clear terminal"
-              className="flex items-center justify-center w-6 h-6 rounded hover:bg-white/6 text-slate-600 hover:text-slate-400 transition-colors"
-            >
-              <Trash2 size={11} />
-            </button>
-          )}
-
           {/* Maximize — hide on mobile (not useful) */}
           <button
             onClick={toggleMaximize}
