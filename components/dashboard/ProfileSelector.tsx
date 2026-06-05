@@ -3,6 +3,7 @@
 import { PROFILES } from "@/lib/profiles";
 import type { WorkspaceProfile } from "@/types";
 import clsx from "clsx";
+import { Plane, Package, Stethoscope, Loader2 } from "lucide-react";
 
 interface Props {
   active: WorkspaceProfile;
@@ -10,42 +11,90 @@ interface Props {
   loading: boolean;
 }
 
-const INDUSTRY_DOTS: Record<string, string> = {
-  Aviation: "bg-sky-400",
-  Logistics: "bg-emerald-400",
-  Healthcare: "bg-rose-400",
+const INDUSTRY_CONFIG: Record<
+  string,
+  {
+    icon: React.ReactNode;
+    color: string;
+    glow: string;
+    activeBg: string;
+    activeText: string;
+    activeBorder: string;
+  }
+> = {
+  Aviation: {
+    icon: <Plane size={11} />,
+    color: "text-sky-400",
+    glow: "shadow-[0_0_12px_rgba(56,189,248,0.25)]",
+    activeBg: "bg-sky-500/10",
+    activeText: "text-sky-300",
+    activeBorder: "border-sky-500/40",
+  },
+  Logistics: {
+    icon: <Package size={11} />,
+    color: "text-emerald-400",
+    glow: "shadow-[0_0_12px_rgba(52,211,153,0.25)]",
+    activeBg: "bg-emerald-500/10",
+    activeText: "text-emerald-300",
+    activeBorder: "border-emerald-500/40",
+  },
+  Healthcare: {
+    icon: <Stethoscope size={11} />,
+    color: "text-rose-400",
+    glow: "shadow-[0_0_12px_rgba(248,113,113,0.25)]",
+    activeBg: "bg-rose-500/10",
+    activeText: "text-rose-300",
+    activeBorder: "border-rose-500/40",
+  },
 };
 
 export function ProfileSelector({ active, onChange, loading }: Props) {
   return (
     <div className="flex items-center gap-3">
-      <span className="font-mono text-xs text-slate-500 uppercase tracking-widest">
+      <span className="font-mono text-[9px] text-slate-600 uppercase tracking-[0.15em] hidden sm:block">
         workspace
       </span>
-      <div className="flex gap-1">
-        {PROFILES.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => !loading && onChange(p)}
-            disabled={loading}
-            className={clsx(
-              "flex items-center gap-2 px-3 py-1.5 rounded text-xs font-mono transition-all duration-150 border",
-              active.id === p.id
-                ? "bg-slate-800 border-slate-600 text-slate-100"
-                : "bg-transparent border-slate-800 text-slate-500 hover:border-slate-600 hover:text-slate-300",
-              loading && "opacity-40 cursor-not-allowed",
-            )}
-          >
-            <span
+
+      <div className="flex gap-1.5">
+        {PROFILES.map((p) => {
+          const cfg = INDUSTRY_CONFIG[p.industry] ?? {
+            icon: null,
+            color: "text-slate-400",
+            glow: "",
+            activeBg: "bg-slate-800",
+            activeText: "text-slate-200",
+            activeBorder: "border-slate-600",
+          };
+          const isActive = active.id === p.id;
+
+          return (
+            <button
+              key={p.id}
+              onClick={() => !loading && onChange(p)}
+              disabled={loading}
               className={clsx(
-                "w-1.5 h-1.5 rounded-full",
-                INDUSTRY_DOTS[p.industry],
-                active.id === p.id ? "opacity-100" : "opacity-40",
+                "relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200 border",
+                "font-sans",
+                isActive
+                  ? [cfg.activeBg, cfg.activeText, cfg.activeBorder, cfg.glow]
+                  : "bg-transparent border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10 hover:bg-white/[0.03]",
+                loading && "opacity-40 cursor-not-allowed pointer-events-none",
               )}
-            />
-            {p.label}
-          </button>
-        ))}
+            >
+              {loading && isActive ? (
+                <Loader2 size={10} className="animate-spin" />
+              ) : (
+                <span className={clsx(isActive ? cfg.color : "text-slate-600")}>
+                  {cfg.icon}
+                </span>
+              )}
+              {p.label}
+              {isActive && (
+                <span className="absolute -top-px -right-px w-1.5 h-1.5 rounded-full bg-current opacity-60" />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

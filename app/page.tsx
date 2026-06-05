@@ -30,28 +30,30 @@ import { BlueprintInspector } from "@/components/inspector/BlueprintInspector";
 import { CollisionSimulator } from "@/components/collision/CollisionSimulator";
 import { Terminal } from "@/components/terminal/Terminal";
 
+import {
+  Cpu,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Radio,
+  GitBranch,
+} from "lucide-react";
+
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "http://localhost:4000";
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<WorkspaceProfile>(DEFAULT_PROFILE);
-
-  // Runtime tokens — fetched fresh on every profile load via POST /tenants/token
-  // Never hardcoded. If the API key in profiles.ts is wrong, loadProfile will
-  // log the error clearly in the terminal.
   const [tokens, setTokens] = useState<ProfileTokens | null>(null);
-
   const [loading, setLoading] = useState(false);
   const [blueprint, setBlueprint] = useState<BlueprintConfig | null>(null);
   const [entities, setEntities] = useState<WorkflowEntity[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
-  // Mutate modal state
   const [mutateTarget, setMutateTarget] = useState<{
     entity: WorkflowEntity;
     actor: "alice" | "bob";
   } | null>(null);
 
-  // Collision state
   const [collisionRunning, setCollisionRunning] = useState(false);
   const [aliceCollisionOutcome, setAliceCollisionOutcome] =
     useState<CollisionOutcome>("idle");
@@ -61,21 +63,23 @@ export default function DashboardPage() {
     string | undefined
   >();
 
-  // Socket refs — kept outside state to avoid re-render loops
   const aliceSocketRef = useRef<Socket | null>(null);
   const bobSocketRef = useRef<Socket | null>(null);
 
-  // ─── Append log (capped at 500 lines) ─────────────────────────────────────
+  // ─── Logs ─────────────────────────────────────────────────────────────────
 
   const addLog = useCallback((log: LogEntry) => {
     setLogs((prev) => [...prev.slice(-499), log]);
   }, []);
 
-  // ─── WebSocket setup ───────────────────────────────────────────────────────
+  function clearLogs() {
+    setLogs([]);
+  }
+
+  // ─── WebSockets ───────────────────────────────────────────────────────────
 
   const connectSockets = useCallback(
     (p: WorkspaceProfile, aliceToken: string, bobToken: string) => {
-      // Tear down any existing connections first
       aliceSocketRef.current?.disconnect();
       bobSocketRef.current?.disconnect();
 
@@ -87,7 +91,7 @@ export default function DashboardPage() {
           reconnectionDelay: 1000,
         });
 
-        socket.on("connect", () => {
+        socket.on("connect", () =>
           addLog(
             makeLog(
               "info",
@@ -95,21 +99,18 @@ export default function DashboardPage() {
               actor,
               `socket_id: ${socket.id}`,
             ),
-          );
-        });
-
-        socket.on("connect_error", (err) => {
+          ),
+        );
+        socket.on("connect_error", (err) =>
           addLog(
             makeLog(
               "error",
               `WebSocket connection failed: ${err.message}`,
               actor,
             ),
-          );
-        });
-
+          ),
+        );
         socket.on("entity:updated", (payload: WsEntityUpdatedPayload) => {
-          // Sync entity state from Redis pub/sub broadcast
           setEntities((prev) =>
             prev.map((e) =>
               e.id === payload.entity_id
@@ -123,7 +124,6 @@ export default function DashboardPage() {
                 : e,
             ),
           );
-
           addLog(
             makeLog(
               "success",
@@ -132,7 +132,6 @@ export default function DashboardPage() {
               `v${payload.version} · actor: ${payload.actor_id}`,
             ),
           );
-
           addLog(
             makeLog(
               "telemetry",
@@ -142,8 +141,7 @@ export default function DashboardPage() {
             ),
           );
         });
-
-        socket.on("mutation:collision", (payload) => {
+        socket.on("mutation:collision", (payload) =>
           addLog(
             makeLog(
               "collision",
@@ -151,14 +149,13 @@ export default function DashboardPage() {
               actor,
               `stale_version: ${payload.stale_version}`,
             ),
-          );
-        });
-
-        socket.on("disconnect", (reason) => {
+          ),
+        );
+        socket.on("disconnect", (reason) =>
           addLog(
             makeLog("telemetry", `WebSocket disconnected: ${reason}`, actor),
-          );
-        });
+          ),
+        );
 
         return socket;
       }
@@ -169,7 +166,7 @@ export default function DashboardPage() {
     [addLog],
   );
 
-  // ─── Load profile ──────────────────────────────────────────────────────────
+  // ─── Load profile ─────────────────────────────────────────────────────────
 
   const loadProfile = useCallback(
     async (p: WorkspaceProfile) => {
@@ -189,10 +186,6 @@ export default function DashboardPage() {
           `tenant: ${p.tenantId}`,
         ),
       );
-
-      // ── Step 1: Issue fresh tokens for Alice and Bob ─────────────────────
-      // Both are dispatchers so they can perform any dispatcher-allowed transition.
-      // The API key must be registered in Stratum first (POST /tenants/register).
       addLog(makeLog("info", "Issuing tokens for Alice + Bob…", "system"));
 
       let aliceToken: string;
@@ -217,7 +210,7 @@ export default function DashboardPage() {
         addLog(
           makeLog(
             "error",
-            `Token issuance failed: ${err.message}. Check that the API key in profiles.ts is correct and the tenant is registered.`,
+            `Token issuance failed: ${err.message}. Check API key and tenant registration.`,
             "system",
           ),
         );
@@ -225,12 +218,9 @@ export default function DashboardPage() {
         return;
       }
 
-      // ── Step 2: Connect WebSockets using fresh tokens ────────────────────
       connectSockets(p, aliceToken, bobToken);
 
-      // ── Step 3: Fetch or upload blueprint ────────────────────────────────
       const existingBlueprint = await fetchActiveBlueprint(aliceToken);
-
       if (existingBlueprint) {
         setBlueprint(existingBlueprint);
         addLog(
@@ -269,9 +259,7 @@ export default function DashboardPage() {
         }
       }
 
-      // ── Step 4: Fetch existing entities or seed demo data ────────────────
       const existing = await fetchEntities(aliceToken, p.entityType);
-
       if (existing.length > 0) {
         setEntities(existing);
         addLog(
@@ -284,7 +272,6 @@ export default function DashboardPage() {
       } else {
         addLog(makeLog("info", "Seeding demo entities…", "system"));
         const seeded: WorkflowEntity[] = [];
-
         for (const seed of p.seedEntities) {
           try {
             const e = await createEntity(
@@ -305,7 +292,6 @@ export default function DashboardPage() {
             addLog(makeLog("error", `Seed failed: ${err.message}`, "system"));
           }
         }
-
         setEntities(seeded);
       }
 
@@ -314,14 +300,10 @@ export default function DashboardPage() {
     [connectSockets, addLog],
   );
 
-  // ─── Profile switch ────────────────────────────────────────────────────────
-
   function handleProfileChange(p: WorkspaceProfile) {
     setProfile(p);
     loadProfile(p);
   }
-
-  // ─── Initial load ──────────────────────────────────────────────────────────
 
   useEffect(() => {
     loadProfile(DEFAULT_PROFILE);
@@ -332,7 +314,7 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Manual mutation (from mutate modal) ──────────────────────────────────
+  // ─── Manual mutation ──────────────────────────────────────────────────────
 
   async function handleMutateConfirm(
     rule: TransitionRule,
@@ -341,7 +323,6 @@ export default function DashboardPage() {
     if (!mutateTarget || !tokens) return;
     const { entity, actor } = mutateTarget;
     setMutateTarget(null);
-
     const token = actor === "alice" ? tokens.alice : tokens.bob;
 
     addLog(
@@ -390,12 +371,11 @@ export default function DashboardPage() {
     }
   }
 
-  // ─── Collision simulation ──────────────────────────────────────────────────
+  // ─── Collision simulation ─────────────────────────────────────────────────
 
   async function handleSimulateCollision() {
     if (!tokens || !blueprint) return;
 
-    // Find the first entity that has an available transition
     const target = entities.find((e) =>
       blueprint.transitions.some((t) => t.from_state === e.currentState),
     );
@@ -411,11 +391,8 @@ export default function DashboardPage() {
     setAliceCollisionOutcome("idle");
     setBobCollisionOutcome("idle");
 
-    // Build minimal valid payloads — Alice and Bob propose different values
-    // for the same transition targeting the same entity at the same version
     const alicePayload: Record<string, unknown> = {};
     const bobPayload: Record<string, unknown> = {};
-
     Object.entries(availableRule.payload_schema).forEach(([key, schema]) => {
       if (schema.type === "string") {
         alicePayload[key] = key.includes("driver")
@@ -452,8 +429,6 @@ export default function DashboardPage() {
       makeLog("info", `Bob payload: ${JSON.stringify(bobPayload)}`, "bob"),
     );
 
-    // Fire both mutations simultaneously — Promise.all dispatches them at
-    // the exact same instant. Only one can win the OCC version check.
     const [aliceResult, bobResult] = await Promise.all([
       mutateEntity(
         tokens.alice,
@@ -473,7 +448,6 @@ export default function DashboardPage() {
       ),
     ]);
 
-    // Determine winner and loser
     if (aliceResult.success) {
       setAliceCollisionOutcome("winner");
       setBobCollisionOutcome("loser");
@@ -513,8 +487,6 @@ export default function DashboardPage() {
         ),
       );
     } else {
-      // Both failed — usually means the entity state changed between the
-      // time we read it and when we fired — tell user to refresh
       setAliceCollisionOutcome("loser");
       setBobCollisionOutcome("loser");
       addLog(
@@ -533,10 +505,8 @@ export default function DashboardPage() {
         "system",
       ),
     );
-
     setCollisionRunning(false);
 
-    // Clear collision highlight after 4 seconds
     setTimeout(() => {
       setAliceCollisionOutcome("idle");
       setBobCollisionOutcome("idle");
@@ -544,26 +514,33 @@ export default function DashboardPage() {
     }, 4000);
   }
 
-  // ─── Derived ──────────────────────────────────────────────────────────────
-
   const availableTransitions = blueprint?.transitions ?? [];
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
-      {/* ── Top bar ───────────────────────────────────────────────────────── */}
-      <header className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm z-10">
+    <div className="h-screen flex flex-col bg-[#080c14] overflow-hidden">
+      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      <header className="flex-shrink-0 flex items-center justify-between px-4 py-0 h-11 border-b border-white/[0.06] bg-[#080c14]/95 backdrop-blur-sm z-20">
+        {/* Left */}
         <div className="flex items-center gap-4">
-          <div>
-            <h1 className="font-display text-base font-bold text-slate-100 tracking-tight leading-none">
-              STRATUM
-            </h1>
-            <p className="font-mono text-[9px] text-slate-600 mt-0.5">
-              engine-as-a-service · showcase
-            </p>
+          {/* Logo */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/30 to-violet-500/20 border border-indigo-500/20">
+              <GitBranch size={13} className="text-indigo-400" />
+            </div>
+            <div className="leading-none">
+              <span className="block font-sans font-bold text-sm text-slate-100 tracking-tight">
+                STRATUM
+              </span>
+              <span className="block font-mono text-[8px] text-slate-700 mt-px">
+                engine-as-a-service
+              </span>
+            </div>
           </div>
-          <div className="w-px h-8 bg-slate-800" />
+
+          <div className="w-px h-6 bg-white/[0.06]" />
+
           <ProfileSelector
             active={profile}
             onChange={handleProfileChange}
@@ -571,50 +548,63 @@ export default function DashboardPage() {
           />
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Token status indicator */}
-          <div className="flex items-center gap-1.5">
+        {/* Right */}
+        <div className="flex items-center gap-3">
+          {/* Token status */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.02] border border-white/[0.05]">
             {tokens ? (
               <>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span className="font-mono text-[10px] text-slate-600">
-                  tokens valid
+                <CheckCircle2 size={10} className="text-emerald-400" />
+                <span className="font-mono text-[9px] text-slate-500">
+                  authenticated
                 </span>
               </>
             ) : loading ? (
               <>
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                <span className="font-mono text-[10px] text-slate-600">
+                <Loader2 size={10} className="text-amber-400 animate-spin" />
+                <span className="font-mono text-[9px] text-slate-500">
                   authenticating…
                 </span>
               </>
             ) : (
               <>
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                <span className="font-mono text-[10px] text-rose-500">
+                <AlertCircle size={10} className="text-rose-400" />
+                <span className="font-mono text-[9px] text-rose-400">
                   auth failed
                 </span>
               </>
             )}
           </div>
 
-          <div className="font-mono text-[10px] text-slate-600">
-            <span className="text-slate-500">{profile.tenantId}</span>
-            <span className="mx-1 text-slate-700">·</span>
-            <span>{profile.entityType}</span>
+          {/* Tenant / entity type */}
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.02] border border-white/[0.05]">
+            <Cpu size={9} className="text-slate-600" />
+            <span className="font-mono text-[9px] text-slate-600">
+              {profile.tenantId}
+            </span>
+            <span className="text-slate-700">·</span>
+            <span className="font-mono text-[9px] text-slate-500">
+              {profile.entityType}
+            </span>
           </div>
 
+          {/* Live indicator */}
           <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-slow" />
-            <span className="font-mono text-[10px] text-slate-600">live</span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 status-live" />
+            </span>
+            <span className="font-mono text-[9px] text-emerald-500/70">
+              live
+            </span>
           </div>
         </div>
       </header>
 
-      {/* ── Main content ──────────────────────────────────────────────────── */}
-      <div className="flex-1 flex min-h-0">
-        {/* ── Blueprint inspector sidebar ───────────────────────────────── */}
-        <aside className="w-64 flex-shrink-0 border-r border-slate-800 flex flex-col min-h-0 overflow-hidden">
+      {/* ── Main ────────────────────────────────────────────────────────── */}
+      <div className="flex-1 flex min-h-0 overflow-hidden">
+        {/* Blueprint sidebar */}
+        <aside className="w-60 flex-shrink-0 border-r border-white/[0.05] flex flex-col min-h-0 overflow-hidden bg-[#0a0f1a]">
           <BlueprintInspector
             config={blueprint}
             loading={loading}
@@ -622,8 +612,9 @@ export default function DashboardPage() {
           />
         </aside>
 
-        {/* ── Center — collision trigger + dual operator columns ────────── */}
-        <main className="flex-1 flex flex-col min-h-0 min-w-0">
+        {/* Center content */}
+        <main className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
+          {/* Collision bar */}
           <CollisionSimulator
             onSimulate={handleSimulateCollision}
             running={collisionRunning}
@@ -631,10 +622,10 @@ export default function DashboardPage() {
             hasEntities={entities.length > 0}
           />
 
-          {/* Dual columns */}
-          <div className="flex-1 flex min-h-0">
-            {/* Alice column */}
-            <div className="flex-1 border-r border-slate-800 min-h-0 overflow-hidden flex flex-col">
+          {/* Dual actor columns */}
+          <div className="flex-1 flex min-h-0 overflow-hidden">
+            {/* Alice */}
+            <div className="flex-1 border-r border-white/[0.05] min-h-0 flex flex-col overflow-hidden">
               <EntityTable
                 entities={entities}
                 actor="alice"
@@ -648,8 +639,8 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* Bob column */}
-            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+            {/* Bob */}
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <EntityTable
                 entities={entities}
                 actor="bob"
@@ -664,12 +655,10 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* ── Terminal ──────────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 h-52 border-t border-slate-800 relative scanlines overflow-hidden">
-        <Terminal logs={logs} />
-      </div>
+      {/* ── Terminal (collapsible, resizable) ───────────────────────────── */}
+      <Terminal logs={logs} onClear={clearLogs} />
 
-      {/* ── Mutate modal ──────────────────────────────────────────────────── */}
+      {/* ── Mutate modal ─────────────────────────────────────────────────── */}
       {mutateTarget && blueprint && (
         <MutateModal
           entity={mutateTarget.entity}

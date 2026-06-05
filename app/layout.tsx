@@ -21,11 +21,11 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500&family=Syne:wght@700;800&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="bg-slate-950 text-slate-200 antialiased overflow-hidden h-screen">
+      <body className="bg-[#080c14] text-slate-200 antialiased overflow-hidden h-screen">
         {children}
       </body>
     </html>

@@ -4,25 +4,49 @@
   box-sizing: border-box;
 }
 
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+:root {
+  --font-sans: "Poppins", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --bg-deep: #080c14;
+  --bg-surface: #0d1117;
+  --bg-raised: #111827;
+  --bg-hover: #1a2235;
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --accent-alice: #38bdf8;
+  --accent-bob: #a78bfa;
+  --accent-success: #34d399;
+  --accent-danger: #f87171;
+  --accent-warning: #fbbf24;
+  --glow-alice: rgba(56, 189, 248, 0.15);
+  --glow-bob: rgba(167, 139, 250, 0.15);
+  --glow-success: rgba(52, 211, 153, 0.15);
+  --glow-danger: rgba(248, 113, 113, 0.15);
 }
 
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-deep);
+}
+
+/* ─── Scrollbar ──────────────────────────────── */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: rgba(255, 255, 255, 0.14);
 }
 
-/* Scanline overlay for terminal aesthetic */
+/* ─── Scanlines (terminal) ───────────────────── */
 .scanlines::before {
   content: "";
   position: absolute;
@@ -31,9 +55,156 @@
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 4px
   );
   pointer-events: none;
   z-index: 1;
+}
+
+/* ─── Grid pattern background ────────────────── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* ─── Glow effects ───────────────────────────── */
+.glow-alice {
+  box-shadow: 0 0 20px var(--glow-alice);
+}
+.glow-bob {
+  box-shadow: 0 0 20px var(--glow-bob);
+}
+.glow-success {
+  box-shadow: 0 0 16px var(--glow-success);
+}
+.glow-danger {
+  box-shadow: 0 0 16px var(--glow-danger);
+}
+
+/* ─── Terminal resize handle ─────────────────── */
+.resize-handle {
+  cursor: ns-resize;
+  user-select: none;
+}
+.resize-handle:hover .resize-bar {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Pulse slow ─────────────────────────────── */
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 2.5s ease-in-out infinite;
+}
+
+/* ─── Blink ──────────────────────────────────── */
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* ─── Fade in ────────────────────────────────── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
+/* ─── Slide up ───────────────────────────────── */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out forwards;
+}
+
+/* ─── Shimmer ────────────────────────────────── */
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ─── Status dot pulse ───────────────────────── */
+@keyframes status-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(52, 211, 153, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+  }
+}
+.status-live {
+  animation: status-pulse 2s ease-out infinite;
+}
+
+/* ─── Collision flash ────────────────────────── */
+@keyframes collision-flash {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(248, 113, 113, 0.1);
+  }
+}
+.collision-flash {
+  animation: collision-flash 0.4s ease-in-out 2;
+}
+
+/* ─── Font ───────────────────────────────────── */
+.font-sans {
+  font-family: var(--font-sans);
+}
+.font-mono {
+  font-family: var(--font-mono) !important;
 }
