@@ -81,7 +81,7 @@ export default function DashboardPage() {
     setLogs([]);
   }
 
-  // ─── WebSockets ───────────────────────────────────────────────────────────
+  // WebSockets
 
   const connectSockets = useCallback(
     (p: WorkspaceProfile, aliceToken: string, bobToken: string) => {
@@ -375,13 +375,36 @@ export default function DashboardPage() {
   async function handleSimulateCollision() {
     if (!tokens || !blueprint) return;
 
-    const target = entities.find((e) =>
-      blueprint.transitions.some((t) => t.from_state === e.currentState),
+    // Re-fetch entities fresh so we always have the latest version numbers
+    const freshEntities = await fetchEntities(tokens.alice, profile.entityType);
+    if (freshEntities.length > 0) {
+      setEntities(freshEntities);
+    }
+
+    // Find first entity with an available transition from fresh data
+    const target = freshEntities.find((e) =>
+      blueprint.transitions.some(
+        (t) =>
+          t.from_state === e.currentState &&
+          t.allowed_roles.includes("dispatcher"),
+      ),
     );
-    if (!target) return;
+
+    if (!target) {
+      addLog(
+        makeLog(
+          "error",
+          "No entity in a mutable state — all entities may be at terminal states",
+          "system",
+        ),
+      );
+      return;
+    }
 
     const availableRule = blueprint.transitions.find(
-      (t) => t.from_state === target.currentState,
+      (t) =>
+        t.from_state === target.currentState &&
+        t.allowed_roles.includes("dispatcher"),
     );
     if (!availableRule) return;
 
@@ -505,14 +528,14 @@ export default function DashboardPage() {
 
   const availableTransitions = blueprint?.transitions ?? [];
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // Render
 
   return (
     <div
       className="flex flex-col bg-[#080c14] overflow-hidden"
       style={{ height: "100dvh" }}
     >
-      {/* ── Top bar ─────────────────────────────────────────────────────── */}
+      {/* Top bar */}
       <header
         className="shrink-0 flex items-center justify-between px-3 sm:px-4 border-b border-white/6 bg-[#080c14]/95 backdrop-blur-sm z-20"
         style={{
@@ -599,7 +622,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* ── Main ────────────────────────────────────────────────────────── */}
+      {/* Main */}
       <div className="flex-1 flex min-h-0 overflow-hidden relative">
         {/* Blueprint sidebar — desktop always visible, mobile as drawer */}
         {/* Mobile backdrop */}
@@ -653,7 +676,7 @@ export default function DashboardPage() {
             hasEntities={entities.length > 0}
           />
 
-          {/* ── Desktop: side-by-side Alice / Bob columns ── */}
+          {/* Desktop: side-by-side Alice / Bob columns */}
           <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
             <div className="flex-1 border-r border-white/5 min-h-0 flex flex-col overflow-hidden">
               <EntityTable
@@ -681,7 +704,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ── Mobile: tabbed Alice / Bob ── */}
+          {/* Mobile: tabbed Alice / Bob */}
           <div className="flex md:hidden flex-col flex-1 min-h-0 overflow-hidden">
             {/* Tab bar */}
             <div className="shrink-0 flex border-b border-white/5">
@@ -751,10 +774,10 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* ── Terminal ─────────────────────────────────────────────────────── */}
+      {/* Terminal */}
       <Terminal logs={logs} onClear={clearLogs} />
 
-      {/* ── Mutate modal ─────────────────────────────────────────────────── */}
+      {/* Mutate modal */}
       {mutateTarget && blueprint && (
         <MutateModal
           entity={mutateTarget.entity}
