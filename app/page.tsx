@@ -12,7 +12,7 @@ import type {
   TransitionRule,
   ProfileTokens,
 } from "@/types";
-import { PROFILES, DEFAULT_PROFILE } from "@/lib/profiles";
+import { DEFAULT_PROFILE } from "@/lib/profiles";
 import {
   issueToken,
   fetchActiveBlueprint,
@@ -37,7 +37,6 @@ import {
   GitBranch,
   Layers,
   X,
-  Menu,
 } from "lucide-react";
 
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "http://localhost:4000";
@@ -511,12 +510,12 @@ export default function DashboardPage() {
   return (
     <div className="h-screen flex flex-col bg-[#080c14] overflow-hidden">
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
-      <header className="flex-shrink-0 flex items-center justify-between px-3 sm:px-4 h-11 border-b border-white/[0.06] bg-[#080c14]/95 backdrop-blur-sm z-20">
+      <header className="shrink-0 flex items-center justify-between px-3 sm:px-4 h-11 border-b border-white/6 bg-[#080c14]/95 backdrop-blur-sm z-20">
         {/* Left */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           {/* Logo */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/30 to-violet-500/20 border border-indigo-500/20">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500/30 to-violet-500/20 border border-indigo-500/20">
               <GitBranch size={13} className="text-indigo-400" />
             </div>
             <div className="leading-none hidden xs:block">
@@ -529,7 +528,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="w-px h-6 bg-white/[0.06] hidden sm:block" />
+          <div className="w-px h-6 bg-white/6 hidden sm:block" />
 
           {/* Profile selector — hidden on very small screens, shown from sm */}
           <div className="hidden sm:block">
@@ -544,7 +543,7 @@ export default function DashboardPage() {
         {/* Right */}
         <div className="flex items-center gap-2">
           {/* Token status */}
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/[0.02] border border-white/[0.05]">
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/2 border border-white/5">
             {tokens ? (
               <CheckCircle2 size={10} className="text-emerald-400" />
             ) : loading ? (
@@ -575,7 +574,7 @@ export default function DashboardPage() {
           {/* Blueprint drawer toggle — mobile only */}
           <button
             onClick={() => setBlueprintOpen(true)}
-            className="lg:hidden flex items-center justify-center w-7 h-7 rounded-md bg-white/[0.03] border border-white/[0.06] text-slate-500 hover:text-slate-300"
+            className="lg:hidden flex items-center justify-center w-7 h-7 rounded-md bg-white/3 border border-white/6 text-slate-500 hover:text-slate-300"
           >
             <Layers size={13} />
           </button>
@@ -583,7 +582,7 @@ export default function DashboardPage() {
       </header>
 
       {/* Profile selector — mobile only, below header */}
-      <div className="sm:hidden flex-shrink-0 px-3 pt-3 pb-3 border-b border-white/[0.05] bg-[#0a0f1a] overflow-visible">
+      <div className="sm:hidden shrink-0 px-3 py-2 border-b border-white/5 bg-[#0a0f1a]">
         <ProfileSelector
           active={profile}
           onChange={handleProfileChange}
@@ -605,7 +604,7 @@ export default function DashboardPage() {
         {/* Sidebar itself */}
         <aside
           className={[
-            "flex-col min-h-0 overflow-hidden bg-[#0a0f1a] border-r border-white/[0.05]",
+            "flex-col min-h-0 overflow-hidden bg-[#0a0f1a] border-r border-white/5",
             // Desktop: always shown as sidebar
             "lg:flex lg:relative lg:w-60 lg:z-auto lg:translate-x-0",
             // Mobile: fixed drawer sliding in from left
@@ -616,13 +615,13 @@ export default function DashboardPage() {
           ].join(" ")}
         >
           {/* Mobile drawer header */}
-          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-white/6">
             <span className="font-sans font-semibold text-sm text-slate-200">
               Blueprint
             </span>
             <button
               onClick={() => setBlueprintOpen(false)}
-              className="flex items-center justify-center w-7 h-7 rounded-md bg-white/[0.04] border border-white/[0.06] text-slate-500 hover:text-slate-300"
+              className="flex items-center justify-center w-7 h-7 rounded-md bg-white/4 border border-white/6 text-slate-500 hover:text-slate-300"
             >
               <X size={13} />
             </button>
@@ -647,7 +646,7 @@ export default function DashboardPage() {
 
           {/* ── Desktop: side-by-side Alice / Bob columns ── */}
           <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
-            <div className="flex-1 border-r border-white/[0.05] min-h-0 flex flex-col overflow-hidden">
+            <div className="flex-1 border-r border-white/5 min-h-0 flex flex-col overflow-hidden">
               <EntityTable
                 entities={entities}
                 actor="alice"
@@ -676,7 +675,7 @@ export default function DashboardPage() {
           {/* ── Mobile: tabbed Alice / Bob ── */}
           <div className="flex md:hidden flex-col flex-1 min-h-0 overflow-hidden">
             {/* Tab bar */}
-            <div className="flex-shrink-0 flex border-b border-white/[0.05]">
+            <div className="shrink-0 flex border-b border-white/5">
               {(["alice", "bob"] as const).map((actor) => {
                 const isActive = mobileTab === actor;
                 const color =

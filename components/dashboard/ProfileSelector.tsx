@@ -54,8 +54,7 @@ export function ProfileSelector({ active, onChange, loading }: Props) {
       <span className="font-mono text-[9px] text-slate-600 uppercase tracking-[0.15em] hidden md:block">
         workspace
       </span>
-      {/* py-1 gives breathing room so box-shadows aren't clipped */}
-      <div className="flex gap-1.5 py-1">
+      <div className="flex gap-1 sm:gap-1.5">
         {PROFILES.map((p) => {
           const cfg = INDUSTRY_CONFIG[p.industry] ?? {
             icon: null,
@@ -72,10 +71,10 @@ export function ProfileSelector({ active, onChange, loading }: Props) {
               onClick={() => !loading && onChange(p)}
               disabled={loading}
               className={clsx(
-                "relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200 border font-sans",
+                "relative flex items-center gap-1.5 px-2.5 lg:cursor-pointer sm:px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200 border font-sans",
                 isActive
                   ? [cfg.activeBg, cfg.activeText, cfg.activeBorder, cfg.glow]
-                  : "bg-transparent border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10 hover:bg-white/[0.03]",
+                  : "bg-transparent border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10 hover:bg-white/3",
                 loading && "opacity-40 cursor-not-allowed pointer-events-none",
               )}
             >
@@ -86,8 +85,9 @@ export function ProfileSelector({ active, onChange, loading }: Props) {
                   {cfg.icon}
                 </span>
               )}
-              {/* Always show label — it fits at px-3 on all phones */}
-              <span>{p.label}</span>
+              {/* Label — hidden on very small screens to save space */}
+              <span className="hidden xs:inline sm:inline">{p.label}</span>
+              {/* Fallback: just icon on tiny screens */}
             </button>
           );
         })}
