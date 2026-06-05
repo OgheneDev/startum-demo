@@ -55,26 +55,23 @@ export default function DashboardPage() {
   const [activeProfileId, setActiveProfileId] = useState<string>(
     DEFAULT_PROFILE.id,
   );
-  const [initializing, setInitializing] = useState(true); // true while all profiles are loading
+  const [initializing, setInitializing] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
-  // Cache keyed by profile id — populated once on mount
   const cacheRef = useRef<Map<string, ProfileCache>>(new Map());
-
-  // Track which profiles have finished loading
   const [readyProfiles, setReadyProfiles] = useState<Set<string>>(new Set());
+  const [entityMap, setEntityMap] = useState<Map<string, WorkflowEntity[]>>(
+    new Map(),
+  );
 
-  // Mobile state
   const [mobileTab, setMobileTab] = useState<"alice" | "bob">("alice");
   const [blueprintOpen, setBlueprintOpen] = useState(false);
 
-  // Mutate modal
   const [mutateTarget, setMutateTarget] = useState<{
     entity: WorkflowEntity;
     actor: "alice" | "bob";
   } | null>(null);
 
-  // Collision state — per active profile
   const [collisionRunning, setCollisionRunning] = useState(false);
   const [aliceCollisionOutcome, setAliceCollisionOutcome] =
     useState<CollisionOutcome>("idle");
@@ -84,12 +81,6 @@ export default function DashboardPage() {
     string | undefined
   >();
 
-  // ─── Entity state per profile (mutable after load) ───────────────────────
-  // We keep a separate React state map so entity updates trigger re-renders
-  const [entityMap, setEntityMap] = useState<Map<string, WorkflowEntity[]>>(
-    new Map(),
-  );
-
   const addLog = useCallback((log: LogEntry) => {
     setLogs((prev) => [...prev.slice(-499), log]);
   }, []);
@@ -98,7 +89,7 @@ export default function DashboardPage() {
     setLogs([]);
   }
 
-  // ─── Build a socket for a profile ────────────────────────────────────────
+  // ─── Build socket ─────────────────────────────────────────────────────────
 
   function makeSocket(
     token: string,
@@ -131,7 +122,6 @@ export default function DashboardPage() {
     );
 
     socket.on("entity:updated", (payload: WsEntityUpdatedPayload) => {
-      // Update entity in the map for this profile
       setEntityMap((prev) => {
         const next = new Map(prev);
         const current = next.get(profileId) ?? [];
@@ -200,15 +190,22 @@ export default function DashboardPage() {
       ),
     );
 
-    // 1. Issue tokens
+    // Issue tokens using each actor's specific role
     let tokens: ProfileTokens;
     try {
       const [a, b] = await Promise.all([
-        issueToken(p.apiKey, "dispatcher", "alice"),
-        issueToken(p.apiKey, "dispatcher", "bob"),
+        issueToken(p.apiKey, p.alice.role, p.alice.id),
+        issueToken(p.apiKey, p.bob.role, p.bob.id),
       ]);
       tokens = { alice: a, bob: b };
-      addLog(makeLog("success", `${p.label} — tokens issued`, "system"));
+      addLog(
+        makeLog(
+          "success",
+          `${p.label} — tokens issued`,
+          "system",
+          `alice: ${p.alice.role} · bob: ${p.bob.role}`,
+        ),
+      );
     } catch (err: any) {
       addLog(
         makeLog(
@@ -220,17 +217,17 @@ export default function DashboardPage() {
       return;
     }
 
-    // 2. Connect sockets
+    // Connect sockets
     const aliceSocket = makeSocket(tokens.alice, "alice", p.id, p.tenantId);
     const bobSocket = makeSocket(tokens.bob, "bob", p.id, p.tenantId);
 
-    // 3. Fetch blueprint + entities in parallel
+    // Fetch blueprint + entities in parallel
     const [existingBlueprint, existing] = await Promise.all([
       fetchActiveBlueprint(tokens.alice),
       fetchEntities(tokens.alice, p.entityType),
     ]);
 
-    // 4. Handle blueprint
+    // Handle blueprint
     let blueprint: BlueprintConfig;
     if (existingBlueprint) {
       blueprint = existingBlueprint;
@@ -255,11 +252,11 @@ export default function DashboardPage() {
             "system",
           ),
         );
-        blueprint = p.blueprint; // fall back to static config
+        blueprint = p.blueprint;
       }
     }
 
-    // 5. Handle entities
+    // Handle entities
     let entities: WorkflowEntity[];
     if (existing.length > 0) {
       entities = existing;
@@ -297,7 +294,6 @@ export default function DashboardPage() {
       );
     }
 
-    // 6. Store in cache
     cacheRef.current.set(p.id, {
       tokens,
       blueprint,
@@ -306,27 +302,22 @@ export default function DashboardPage() {
       bobSocket,
     });
 
-    // 7. Update entity map for reactivity
     setEntityMap((prev) => {
       const next = new Map(prev);
       next.set(p.id, entities);
       return next;
     });
 
-    // 8. Mark this profile as ready
     setReadyProfiles((prev) => new Set([...prev, p.id]));
   }
 
-  // ─── Boot all profiles on mount ───────────────────────────────────────────
+  // ─── Boot all on mount ────────────────────────────────────────────────────
 
   useEffect(() => {
     async function bootAll() {
       setInitializing(true);
       addLog(makeLog("info", "Booting all workspaces in parallel…", "system"));
-
-      // Boot all three profiles simultaneously
       await Promise.all(PROFILES.map((p) => bootProfile(p)));
-
       addLog(makeLog("success", "All workspaces ready", "system"));
       setInitializing(false);
     }
@@ -334,7 +325,6 @@ export default function DashboardPage() {
     bootAll();
 
     return () => {
-      // Disconnect all sockets on unmount
       cacheRef.current.forEach((cache) => {
         cache.aliceSocket.disconnect();
         cache.bobSocket.disconnect();
@@ -343,7 +333,7 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Switching profiles is now instant — just update activeProfileId ──────
+  // ─── Profile switch — instant, no network calls ───────────────────────────
 
   function handleProfileChange(p: WorkspaceProfile) {
     setActiveProfileId(p.id);
@@ -353,7 +343,7 @@ export default function DashboardPage() {
     addLog(makeLog("info", `Switched to workspace: ${p.label}`, "system"));
   }
 
-  // ─── Derived active profile data ──────────────────────────────────────────
+  // ─── Derived active state ─────────────────────────────────────────────────
 
   const activeProfile = PROFILES.find((p) => p.id === activeProfileId)!;
   const activeCache = cacheRef.current.get(activeProfileId);
@@ -361,6 +351,7 @@ export default function DashboardPage() {
   const activeBlueprint = activeCache?.blueprint ?? null;
   const activeTokens = activeCache?.tokens ?? null;
   const activeProfileReady = readyProfiles.has(activeProfileId);
+  const isLoading = initializing || !activeProfileReady;
 
   // ─── Manual mutation ──────────────────────────────────────────────────────
 
@@ -421,6 +412,10 @@ export default function DashboardPage() {
   }
 
   // ─── Collision simulation ─────────────────────────────────────────────────
+  // Finds a transition both Alice AND Bob can perform (shared role intersection),
+  // or falls back to finding any entity where at least one of them can act.
+  // For profiles with different roles (e.g. dispatcher + driver), the collision
+  // targets a transition accessible to both — if none exists, it uses Alice's role.
 
   async function handleSimulateCollision() {
     if (!activeTokens || !activeBlueprint) return;
@@ -437,37 +432,64 @@ export default function DashboardPage() {
       });
     }
 
-    const target = freshEntities.find((e) =>
+    const aliceRole = activeProfile.alice.role;
+    const bobRole = activeProfile.bob.role;
+
+    // Prefer a transition both can perform (true collision scenario)
+    let target = freshEntities.find((e) =>
       activeBlueprint.transitions.some(
         (t) =>
           t.from_state === e.currentState &&
-          t.allowed_roles.includes("dispatcher"),
+          t.allowed_roles.includes(aliceRole) &&
+          t.allowed_roles.includes(bobRole),
       ),
     );
 
-    if (!target) {
+    let availableRule = target
+      ? activeBlueprint.transitions.find(
+          (t) =>
+            t.from_state === target!.currentState &&
+            t.allowed_roles.includes(aliceRole) &&
+            t.allowed_roles.includes(bobRole),
+        )
+      : undefined;
+
+    // Fallback — find any transition Alice can do (Bob will get a FORBIDDEN but
+    // that still demonstrates the OCC layer for the winner)
+    if (!target || !availableRule) {
+      target = freshEntities.find((e) =>
+        activeBlueprint.transitions.some(
+          (t) =>
+            t.from_state === e.currentState &&
+            t.allowed_roles.includes(aliceRole),
+        ),
+      );
+      availableRule = target
+        ? activeBlueprint.transitions.find(
+            (t) =>
+              t.from_state === target!.currentState &&
+              t.allowed_roles.includes(aliceRole),
+          )
+        : undefined;
+    }
+
+    if (!target || !availableRule) {
       addLog(
         makeLog(
           "error",
-          "No entity in a dispatcher-accessible state — all remaining transitions require a different role",
+          "No entity in a mutable state for current actors — all may be at terminal states",
           "system",
         ),
       );
       return;
     }
 
-    const availableRule = activeBlueprint.transitions.find(
-      (t) =>
-        t.from_state === target.currentState &&
-        t.allowed_roles.includes("dispatcher"),
-    );
-    if (!availableRule) return;
-
     setCollisionRunning(true);
     setCollisionEntityId(target.id);
     setAliceCollisionOutcome("idle");
     setBobCollisionOutcome("idle");
 
+    // Build payloads
     const alicePayload: Record<string, unknown> = {};
     const bobPayload: Record<string, unknown> = {};
 
@@ -494,6 +516,20 @@ export default function DashboardPage() {
         `Collision race — entity: ${target.id.slice(0, 8)}… v${target.version}`,
         "system",
         `targeting: ${availableRule.from_state} → ${availableRule.to_state}`,
+      ),
+    );
+    addLog(
+      makeLog(
+        "info",
+        `Alice (${aliceRole}) payload: ${JSON.stringify(alicePayload)}`,
+        "alice",
+      ),
+    );
+    addLog(
+      makeLog(
+        "info",
+        `Bob (${bobRole}) payload: ${JSON.stringify(bobPayload)}`,
+        "bob",
       ),
     );
 
@@ -583,7 +619,6 @@ export default function DashboardPage() {
   }
 
   const availableTransitions = activeBlueprint?.transitions ?? [];
-  const isLoading = initializing || !activeProfileReady;
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -600,7 +635,6 @@ export default function DashboardPage() {
           minHeight: "calc(2.75rem + env(safe-area-inset-top))",
         }}
       >
-        {/* Left */}
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500/30 to-violet-500/20 border border-indigo-500/20">
@@ -627,9 +661,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right */}
         <div className="flex items-center gap-2">
-          {/* Boot progress indicator */}
           {initializing && (
             <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/2 border border-white/5">
               <Loader2 size={9} className="text-amber-400 animate-spin" />
@@ -639,7 +671,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Token status */}
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/2 border border-white/5">
             {activeTokens ? (
               <CheckCircle2 size={10} className="text-emerald-400" />
@@ -657,7 +688,6 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          {/* Live indicator */}
           <div className="flex items-center gap-1.5">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40" />
@@ -668,7 +698,6 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          {/* Blueprint drawer toggle — mobile only */}
           <button
             onClick={() => setBlueprintOpen(true)}
             className="lg:hidden flex items-center justify-center w-7 h-7 rounded-md bg-white/3 border border-white/6 text-slate-500 hover:text-slate-300"
@@ -678,7 +707,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* Profile selector — mobile only */}
+      {/* Mobile profile selector */}
       <div className="sm:hidden shrink-0 px-3 py-2 border-b border-white/5 bg-[#0a0f1a]">
         <ProfileSelector
           active={activeProfile}
@@ -689,7 +718,6 @@ export default function DashboardPage() {
 
       {/* Main */}
       <div className="flex-1 flex min-h-0 overflow-hidden relative">
-        {/* Mobile backdrop */}
         {blueprintOpen && (
           <div
             className="lg:hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm"
@@ -697,7 +725,6 @@ export default function DashboardPage() {
           />
         )}
 
-        {/* Blueprint sidebar */}
         <aside
           className={[
             "flex-col min-h-0 overflow-hidden bg-[#0a0f1a] border-r border-white/5",
@@ -726,7 +753,6 @@ export default function DashboardPage() {
           />
         </aside>
 
-        {/* Center */}
         <main className="flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden">
           <CollisionSimulator
             onSimulate={handleSimulateCollision}
@@ -735,7 +761,7 @@ export default function DashboardPage() {
             hasEntities={activeEntities.length > 0}
           />
 
-          {/* Desktop: side-by-side columns */}
+          {/* Desktop: side-by-side */}
           <div className="hidden md:flex flex-1 min-h-0 overflow-hidden">
             <div className="flex-1 border-r border-white/5 min-h-0 flex flex-col overflow-hidden">
               <EntityTable
@@ -748,6 +774,8 @@ export default function DashboardPage() {
                   setMutateTarget({ entity, actor: "alice" })
                 }
                 availableTransitions={availableTransitions}
+                actorLabel={activeProfile.alice.label}
+                actorRole={activeProfile.alice.role}
               />
             </div>
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -759,6 +787,8 @@ export default function DashboardPage() {
                 collisionOutcome={bobCollisionOutcome}
                 onMutate={(entity) => setMutateTarget({ entity, actor: "bob" })}
                 availableTransitions={availableTransitions}
+                actorLabel={activeProfile.bob.label}
+                actorRole={activeProfile.bob.role}
               />
             </div>
           </div>
@@ -768,6 +798,8 @@ export default function DashboardPage() {
             <div className="shrink-0 flex border-b border-white/5">
               {(["alice", "bob"] as const).map((actor) => {
                 const isActive = mobileTab === actor;
+                const def =
+                  actor === "alice" ? activeProfile.alice : activeProfile.bob;
                 const color =
                   actor === "alice"
                     ? "text-sky-400 border-sky-400"
@@ -793,7 +825,7 @@ export default function DashboardPage() {
                     />
                     {actor === "alice" ? "Alice" : "Bob"}
                     <span className="font-mono text-[9px] opacity-50">
-                      / dispatcher
+                      / {def.role}
                     </span>
                   </button>
                 );
@@ -811,6 +843,8 @@ export default function DashboardPage() {
                     setMutateTarget({ entity, actor: "alice" })
                   }
                   availableTransitions={availableTransitions}
+                  actorLabel={activeProfile.alice.label}
+                  actorRole={activeProfile.alice.role}
                 />
               ) : (
                 <EntityTable
@@ -823,6 +857,8 @@ export default function DashboardPage() {
                     setMutateTarget({ entity, actor: "bob" })
                   }
                   availableTransitions={availableTransitions}
+                  actorLabel={activeProfile.bob.label}
+                  actorRole={activeProfile.bob.role}
                 />
               )}
             </div>
@@ -830,15 +866,18 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Terminal */}
       <Terminal logs={logs} onClear={clearLogs} />
 
-      {/* Mutate modal */}
       {mutateTarget && activeBlueprint && (
         <MutateModal
           entity={mutateTarget.entity}
           transitions={activeBlueprint.transitions}
           actor={mutateTarget.actor}
+          actorRole={
+            mutateTarget.actor === "alice"
+              ? activeProfile.alice.role
+              : activeProfile.bob.role
+          }
           onConfirm={handleMutateConfirm}
           onClose={() => setMutateTarget(null)}
         />

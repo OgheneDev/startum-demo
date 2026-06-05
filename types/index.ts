@@ -1,12 +1,20 @@
 // ─── Profiles ─────────────────────────────────────────────────────────────────
 
+export interface ActorDefinition {
+  id: string;
+  role: string;
+  label: string;
+}
+
 export interface WorkspaceProfile {
   id: string;
   label: string;
   tenantId: string;
   entityType: string;
   industry: string;
-  apiKey: string; // raw API key — used at runtime to fetch JWTs
+  apiKey: string;
+  alice: ActorDefinition;
+  bob: ActorDefinition;
   blueprint: BlueprintConfig;
   seedEntities: SeedEntity[];
 }
@@ -50,8 +58,6 @@ export interface SeedEntity {
 }
 
 // ─── Runtime tokens ───────────────────────────────────────────────────────────
-// Fetched at boot / profile-switch via POST /tenants/token
-// Never hardcoded — tokens expire and rotating them here would be a mess
 
 export interface ProfileTokens {
   alice: string;

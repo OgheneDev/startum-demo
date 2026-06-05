@@ -2,13 +2,17 @@ import type { WorkspaceProfile } from "@/types";
 
 export const PROFILES: WorkspaceProfile[] = [
   // ── Aviation Operations ────────────────────────────────────────────────────
+  // Alice: dispatcher — handles ground ops assignments
+  // Bob: dispatcher — both dispatchers makes sense for aviation coordination
   {
     id: "aviation",
     label: "Aviation Operations",
     tenantId: "skyroute-77",
     entityType: "flight_turnaround",
     industry: "Aviation",
-    apiKey: "strat_d53ec67aa1914feb97bba8cd00b38166",
+    apiKey: "strat_55d3d32e454f42f598b6b4ef4f18c4ff",
+    alice: { id: "alice", role: "dispatcher", label: "Alice / dispatcher" },
+    bob: { id: "bob", role: "dispatcher", label: "Bob / dispatcher" },
     blueprint: {
       entity_types: ["flight_turnaround"],
       transitions: [
@@ -48,7 +52,7 @@ export const PROFILES: WorkspaceProfile[] = [
         {
           from_state: "boarding",
           to_state: "departed",
-          allowed_roles: ["admin"],
+          allowed_roles: ["dispatcher", "admin"],
           payload_schema: {
             pushback_time: { type: "string", required: true },
           },
@@ -87,13 +91,17 @@ export const PROFILES: WorkspaceProfile[] = [
   },
 
   // ── Logistics and Fleet ────────────────────────────────────────────────────
+  // Alice: dispatcher — assigns drivers, manages fleet
+  // Bob: driver — executes deliveries
   {
     id: "logistics",
     label: "Logistics & Fleet",
     tenantId: "swiftcargo-99",
     entityType: "dispatch_order",
     industry: "Logistics",
-    apiKey: "strat_35c0aa8a439a464cb473ee0bd8031595",
+    apiKey: "strat_4bdfde9e6b5f44a3ae82c79c8498b140",
+    alice: { id: "alice", role: "dispatcher", label: "Alice / dispatcher" },
+    bob: { id: "bob", role: "driver", label: "Bob / driver" },
     blueprint: {
       entity_types: ["dispatch_order"],
       transitions: [
@@ -127,7 +135,7 @@ export const PROFILES: WorkspaceProfile[] = [
         {
           from_state: "pending",
           to_state: "cancelled",
-          allowed_roles: ["admin"],
+          allowed_roles: ["admin", "dispatcher"],
           payload_schema: {
             reason: { type: "string", required: true },
           },
@@ -157,7 +165,7 @@ export const PROFILES: WorkspaceProfile[] = [
       },
       {
         label: "Order #SC-8839 Ibadan→Lagos",
-        initial_state: "in_transit",
+        initial_state: "assigned",
         attributes: {
           order_ref: "SC-8839",
           origin: "Ibadan",
@@ -169,20 +177,24 @@ export const PROFILES: WorkspaceProfile[] = [
   },
 
   // ── Emergency Medicine ─────────────────────────────────────────────────────
+  // Alice: nurse — performs triage
+  // Bob: doctor — assessment, treatment, discharge
   {
     id: "healthcare",
     label: "Emergency Medicine",
     tenantId: "metrohealth-55",
     entityType: "er_triage",
     industry: "Healthcare",
-    apiKey: "strat_9acebdd738fe490faeca1e2cb51c71a3",
+    apiKey: "strat_5d91aad6a4754f2791df8a891d5c8ecd",
+    alice: { id: "alice", role: "nurse", label: "Alice / nurse" },
+    bob: { id: "bob", role: "doctor", label: "Bob / doctor" },
     blueprint: {
       entity_types: ["er_triage"],
       transitions: [
         {
           from_state: "waiting",
           to_state: "triage",
-          allowed_roles: ["nurse", "dispatcher"],
+          allowed_roles: ["nurse"],
           payload_schema: {
             nurse_id: { type: "string", required: true },
             chief_complaint: { type: "string", required: true },
@@ -191,7 +203,7 @@ export const PROFILES: WorkspaceProfile[] = [
         {
           from_state: "triage",
           to_state: "assessment",
-          allowed_roles: ["doctor", "dispatcher"],
+          allowed_roles: ["doctor"],
           payload_schema: {
             doctor_id: { type: "string", required: true },
             acuity_level: { type: "number", required: true },
@@ -209,7 +221,7 @@ export const PROFILES: WorkspaceProfile[] = [
         {
           from_state: "treatment",
           to_state: "discharged",
-          allowed_roles: ["doctor", "admin"],
+          allowed_roles: ["doctor"],
           payload_schema: {
             discharge_notes: { type: "string", required: true },
           },

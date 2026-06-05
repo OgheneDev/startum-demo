@@ -9,6 +9,7 @@ interface Props {
   entity: WorkflowEntity;
   transitions: TransitionRule[];
   actor: "alice" | "bob";
+  actorRole: string;
   onConfirm: (rule: TransitionRule, payload: Record<string, unknown>) => void;
   onClose: () => void;
 }
@@ -17,6 +18,7 @@ export function MutateModal({
   entity,
   transitions,
   actor,
+  actorRole,
   onConfirm,
   onClose,
 }: Props) {
@@ -100,7 +102,10 @@ export function MutateModal({
                     accentText,
                   )}
                 >
-                  {actor}
+                  {actor}{" "}
+                  <span className="font-mono text-[10px] text-slate-600">
+                    / {actorRole}
+                  </span>
                 </span>
               </div>
               <div className="font-mono text-[9px] text-slate-600 mt-0.5">
