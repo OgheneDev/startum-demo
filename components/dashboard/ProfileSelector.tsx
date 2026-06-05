@@ -74,7 +74,7 @@ export function ProfileSelector({ active, onChange, loading }: Props) {
                 "relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200 border font-sans",
                 isActive
                   ? [cfg.activeBg, cfg.activeText, cfg.activeBorder, cfg.glow]
-                  : "bg-transparent border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10 hover:bg-white/[0.03]",
+                  : "bg-transparent border-white/5 text-slate-500 hover:text-slate-300 hover:border-white/10 hover:bg-white/3",
                 loading && "opacity-40 cursor-not-allowed pointer-events-none",
               )}
             >

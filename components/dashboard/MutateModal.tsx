@@ -77,7 +77,7 @@ export function MutateModal({
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-white/6">
           <div className="flex items-center gap-3">
             <div
               className={clsx(
@@ -110,7 +110,7 @@ export function MutateModal({
           </div>
           <button
             onClick={onClose}
-            className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-slate-500 hover:text-slate-300 transition-colors"
+            className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/4 hover:bg-white/8 border border-white/6 text-slate-500 hover:text-slate-300 transition-colors"
           >
             <X size={13} />
           </button>
@@ -120,7 +120,7 @@ export function MutateModal({
         <div className="px-4 sm:px-5 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
           {/* Transition selector */}
           <div className="space-y-2">
-            <label className="flex items-center gap-1.5 font-mono text-[9px] text-slate-600 uppercase tracking-[0.1em]">
+            <label className="flex items-center gap-1.5 font-mono text-[9px] text-slate-600 uppercase tracking-widest">
               <ArrowRight size={9} />
               Select Transition
             </label>
@@ -138,7 +138,7 @@ export function MutateModal({
                       "w-full text-left px-3 py-2.5 rounded-lg border font-mono text-xs transition-all duration-150",
                       isSelected
                         ? [activeRuleBg, activeRuleText]
-                        : "bg-white/[0.02] border-white/[0.05] text-slate-500 hover:bg-white/[0.04] hover:border-white/[0.08]",
+                        : "bg-white/2 border-white/5 text-slate-500 hover:bg-white/4 hover:border-white/8",
                     )}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-y-1 gap-x-2">
@@ -152,7 +152,7 @@ export function MutateModal({
                         </span>
                         <ArrowRight
                           size={9}
-                          className="text-slate-700 flex-shrink-0"
+                          className="text-slate-700 shrink-0"
                         />
                         <span
                           className={
@@ -166,7 +166,7 @@ export function MutateModal({
                         {rule.allowed_roles.map((r) => (
                           <span
                             key={r}
-                            className="inline-flex items-center gap-0.5 font-mono text-[8px] px-1.5 py-0.5 bg-slate-900 border border-white/[0.05] text-slate-600 rounded"
+                            className="inline-flex items-center gap-0.5 font-mono text-[8px] px-1.5 py-0.5 bg-slate-900 border border-white/5 text-slate-600 rounded"
                           >
                             <Shield size={7} />
                             {r}
@@ -184,7 +184,7 @@ export function MutateModal({
           {selectedRule &&
             Object.keys(selectedRule.payload_schema).length > 0 && (
               <div className="space-y-2">
-                <label className="flex items-center gap-1.5 font-mono text-[9px] text-slate-600 uppercase tracking-[0.1em]">
+                <label className="flex items-center gap-1.5 font-mono text-[9px] text-slate-600 uppercase tracking-widest">
                   <Terminal size={9} />
                   Payload
                 </label>
@@ -216,10 +216,10 @@ export function MutateModal({
                           }
                           placeholder={`${schema.type}…`}
                           className={clsx(
-                            "w-full bg-white/[0.03] border rounded-lg px-3 py-2.5",
+                            "w-full bg-white/3 border rounded-lg px-3 py-2.5",
                             "font-mono text-xs text-slate-200 placeholder-slate-700",
                             "transition-colors duration-150 focus:outline-none",
-                            "border-white/[0.06] focus:border-white/[0.14]",
+                            "border-white/6 focus:border-white/[0.14]",
                             // larger tap target on mobile
                             "text-base sm:text-xs",
                           )}
@@ -233,10 +233,10 @@ export function MutateModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-4 sm:px-5 py-3.5 border-t border-white/[0.06] bg-white/[0.01]">
+        <div className="flex items-center justify-end gap-2 px-4 sm:px-5 py-3.5 border-t border-white/6 bg-white/1">
           <button
             onClick={onClose}
-            className="font-sans text-xs px-3.5 py-2 text-slate-500 hover:text-slate-300 transition-colors rounded-lg hover:bg-white/[0.04]"
+            className="font-sans text-xs px-3.5 py-2 text-slate-500 hover:text-slate-300 transition-colors rounded-lg hover:bg-white/4"
           >
             Cancel
           </button>

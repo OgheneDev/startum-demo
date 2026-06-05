@@ -128,7 +128,7 @@ export function Terminal({ logs, onClear }: Props) {
 
   return (
     <div
-      className="flex-shrink-0 border-t border-white/[0.06] flex flex-col relative transition-[height] duration-150"
+      className="shrink-0 border-t border-white/6 flex flex-col relative transition-[height] duration-150"
       style={{ height: effectiveHeight }}
     >
       {/* Drag handle — desktop only, not when collapsed/maximized */}
@@ -137,16 +137,16 @@ export function Terminal({ logs, onClear }: Props) {
           onMouseDown={startDrag}
           className="resize-handle absolute top-0 left-0 right-0 h-1 z-10 hidden sm:block group cursor-ns-resize"
         >
-          <div className="resize-bar absolute top-0 left-0 right-0 h-px bg-white/[0.05] transition-colors duration-150" />
+          <div className="resize-bar absolute top-0 left-0 right-0 h-px bg-white/5 transition-colors duration-150" />
         </div>
       )}
 
       {/* ── VS Code-style tab header ─────────────────────── */}
-      <div className="flex-shrink-0 flex items-center justify-between px-2 sm:px-3 h-8 bg-[#0a0f1a] border-b border-white/[0.05]">
+      <div className="shrink-0 flex items-center justify-between px-2 sm:px-3 h-8 bg-[#0a0f1a] border-b border-white/5">
         {/* Tab */}
         <button
           onClick={toggleCollapse}
-          className="flex items-center gap-2 h-full px-3 border-r border-white/[0.05] border-t-2 border-t-sky-500 bg-[#0d1117] text-slate-300 hover:text-slate-100 transition-colors"
+          className="flex items-center gap-2 h-full px-3 border-r border-white/5 border-t-2 border-t-sky-500 bg-[#0d1117] text-slate-300 hover:text-slate-100 transition-colors"
         >
           <TerminalIcon size={11} />
           <span className="font-sans text-[11px] font-medium">Terminal</span>
@@ -163,7 +163,7 @@ export function Terminal({ logs, onClear }: Props) {
         {/* Actions */}
         <div className="flex items-center gap-0.5 pr-1">
           {/* Legend — desktop only */}
-          <div className="hidden md:flex items-center gap-2 mr-2 pr-2 border-r border-white/[0.05]">
+          <div className="hidden md:flex items-center gap-2 mr-2 pr-2 border-r border-white/5">
             {Object.entries(LEVEL_STYLES).map(([key, s]) => (
               <div
                 key={key}
@@ -182,7 +182,7 @@ export function Terminal({ logs, onClear }: Props) {
             <button
               onClick={onClear}
               title="Clear terminal"
-              className="flex items-center justify-center w-6 h-6 rounded hover:bg-white/[0.06] text-slate-600 hover:text-slate-400 transition-colors"
+              className="flex items-center justify-center w-6 h-6 rounded hover:bg-white/6 text-slate-600 hover:text-slate-400 transition-colors"
             >
               <Trash2 size={11} />
             </button>
@@ -192,7 +192,7 @@ export function Terminal({ logs, onClear }: Props) {
           <button
             onClick={toggleMaximize}
             title={maximized ? "Restore" : "Maximize"}
-            className="hidden sm:flex items-center justify-center w-6 h-6 rounded hover:bg-white/[0.06] text-slate-600 hover:text-slate-400 transition-colors"
+            className="hidden sm:flex items-center justify-center w-6 h-6 rounded hover:bg-white/6 text-slate-600 hover:text-slate-400 transition-colors"
           >
             {maximized ? <Minimize2 size={11} /> : <Maximize2 size={11} />}
           </button>
@@ -200,7 +200,7 @@ export function Terminal({ logs, onClear }: Props) {
           <button
             onClick={toggleCollapse}
             title={collapsed ? "Expand" : "Collapse"}
-            className="flex items-center justify-center w-6 h-6 rounded hover:bg-white/[0.06] text-slate-600 hover:text-slate-400 transition-colors"
+            className="flex items-center justify-center w-6 h-6 rounded hover:bg-white/6 text-slate-600 hover:text-slate-400 transition-colors"
           >
             {collapsed ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
           </button>
@@ -232,10 +232,10 @@ export function Terminal({ logs, onClear }: Props) {
               return (
                 <div
                   key={log.id}
-                  className="group flex items-start gap-1.5 sm:gap-2 py-0.5 rounded-sm hover:bg-white/[0.02] px-1 -mx-1 animate-fade-in"
+                  className="group flex items-start gap-1.5 sm:gap-2 py-0.5 rounded-sm hover:bg-white/2 px-1 -mx-1 animate-fade-in"
                 >
                   {/* Timestamp — abbreviated on mobile */}
-                  <span className="flex-shrink-0 text-slate-700 tabular-nums w-[60px] sm:w-[88px] text-right pt-px">
+                  <span className="shrink-0 text-slate-700 tabular-nums w-15 sm:w-22 text-right pt-px">
                     <span className="hidden sm:inline">{formatTs(log.ts)}</span>
                     <span className="sm:hidden">
                       {formatTs(log.ts).slice(-8)}
@@ -245,7 +245,7 @@ export function Terminal({ logs, onClear }: Props) {
                   {/* Level badge */}
                   <span
                     className={clsx(
-                      "flex-shrink-0 text-[8px] px-1 sm:px-1.5 py-px rounded border font-bold tracking-wide whitespace-nowrap",
+                      "shrink-0 text-[8px] px-1 sm:px-1.5 py-px rounded border font-bold tracking-wide whitespace-nowrap",
                       style.badge,
                     )}
                   >
@@ -256,7 +256,7 @@ export function Terminal({ logs, onClear }: Props) {
                   {actor && (
                     <span
                       className={clsx(
-                        "flex-shrink-0 text-[8px] px-1 sm:px-1.5 py-px rounded font-medium",
+                        "shrink-0 text-[8px] px-1 sm:px-1.5 py-px rounded font-medium",
                         actor.text,
                         actor.bg,
                       )}
@@ -268,7 +268,7 @@ export function Terminal({ logs, onClear }: Props) {
                   {/* Message */}
                   <span
                     className={clsx(
-                      "flex-1 min-w-0 break-all sm:break-words",
+                      "flex-1 min-w-0 break-all sm:wrap-break-word",
                       style.text,
                     )}
                   >
@@ -291,7 +291,7 @@ export function Terminal({ logs, onClear }: Props) {
                 setAutoScroll(true);
                 bottomRef.current?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="absolute bottom-2 right-2 flex items-center gap-1 font-mono text-[10px] px-2 py-1 bg-slate-800/90 border border-white/[0.1] text-slate-400 rounded-lg hover:text-slate-200 transition-colors backdrop-blur-sm"
+              className="absolute bottom-2 right-2 flex items-center gap-1 font-mono text-[10px] px-2 py-1 bg-slate-800/90 border border-white/10 text-slate-400 rounded-lg hover:text-slate-200 transition-colors backdrop-blur-sm"
             >
               <ChevronDown size={10} />
               <span className="hidden sm:inline">scroll to bottom</span>

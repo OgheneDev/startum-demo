@@ -122,7 +122,7 @@ export function EntityTable({
   return (
     <div className="flex flex-col h-full">
       {/* Column header */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-white/[0.05]">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-white/5">
         <div className="flex items-center gap-2">
           <div
             className={clsx(
@@ -160,14 +160,11 @@ export function EntityTable({
       </div>
 
       {/* Entity list */}
-      <div className="flex-1 overflow-y-auto divide-y divide-white/[0.03]">
+      <div className="flex-1 overflow-y-auto divide-y divide-white/3">
         {loading && (
           <div className="p-3 space-y-2">
             {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className="h-[68px] sm:h-[72px] rounded-lg shimmer"
-              />
+              <div key={i} className="h-17 sm:h-18 rounded-lg shimmer" />
             ))}
           </div>
         )}
@@ -196,7 +193,7 @@ export function EntityTable({
                   "group relative px-3 sm:px-4 py-3 transition-all duration-300",
                   isWinner && "bg-emerald-950/25",
                   isLoser && "bg-rose-950/25 collision-flash",
-                  !isCollisionTarget && "hover:bg-white/[0.02]",
+                  !isCollisionTarget && "hover:bg-white/2",
                 )}
               >
                 {/* Left accent bar on collision */}
@@ -215,7 +212,7 @@ export function EntityTable({
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                       <span
                         className={clsx(
-                          "w-1.5 h-1.5 rounded-full flex-shrink-0",
+                          "w-1.5 h-1.5 rounded-full shrink-0",
                           isWinner
                             ? "bg-emerald-400"
                             : isLoser
@@ -242,7 +239,7 @@ export function EntityTable({
                       <span className="font-mono text-[9px] text-slate-700">
                         v{entity.version}
                       </span>
-                      <span className="w-px h-2 bg-white/[0.06]" />
+                      <span className="w-px h-2 bg-white/6" />
                       <span className="font-mono text-[9px] text-slate-700">
                         {entity.entityType}
                       </span>
@@ -265,7 +262,7 @@ export function EntityTable({
                   </div>
 
                   {/* Right: badge or mutate button */}
-                  <div className="flex-shrink-0 flex items-center gap-1.5">
+                  <div className="shrink-0 flex items-center gap-1.5">
                     {isWinner && (
                       <span className="animate-fade-in flex items-center gap-1 font-mono text-[9px] px-2 py-1 bg-emerald-900/40 text-emerald-400 rounded-md border border-emerald-500/25">
                         <CheckCircle2 size={9} />
@@ -285,7 +282,7 @@ export function EntityTable({
                         onClick={() => onMutate(entity)}
                         className={clsx(
                           "flex items-center gap-1 font-mono text-[10px] px-2 py-1.5 rounded-md border transition-all duration-150",
-                          "bg-white/[0.03] border-white/[0.08] text-slate-500",
+                          "bg-white/3 border-white/8 text-slate-500",
                           // Always visible on touch, hover-reveal on desktop
                           "sm:opacity-0 sm:group-hover:opacity-100",
                           mutateHover,
